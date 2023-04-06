@@ -12,8 +12,11 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         const theUrl = (0, create_linkedin_url_1.createLinkedinLink)(url, true);
         (0, gotoUrl_1.gotoUrl)(page, theUrl);
         await this.waitForLoader(page);
+        if (page.url().match("404")) {
+            throw new linkedin_errors_1.LinkedinErrors("Page not found");
+        }
         await page.waitForSelector(".pv-top-card--list > li, .pv-top-card__photo");
-        await (0, timer_1.timer)(3000);
+        await (0, timer_1.timer)(500);
         const pending = await page.$("button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary");
         const pending2 = await page.evaluate(() => {
             return !!Array.from(document.querySelectorAll("button")).find((p) => {
@@ -32,17 +35,17 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         }
         const info = await this.extractInformation(page);
         await this.clickConnectButton(page);
-        await (0, timer_1.timer)(3000);
-        const email = await page.$("#email");
+        await (0, timer_1.timer)(500);
+        const email = await page.$('input[name="email"]');
         if (email) {
             throw new linkedin_errors_1.LinkedinErrors("Linkedin Prompt Email Verification");
         }
         try {
-            await page.waitForSelector('.artdeco-pill-choice-group button', {
+            await page.waitForSelector(".artdeco-pill-choice-group button", {
                 visible: true,
-                timeout: 3000
+                timeout: 500,
             });
-            await this.moveAndClick(page, '.artdeco-pill-choice-group button:nth-child(1)');
+            await this.moveAndClick(page, ".artdeco-pill-choice-group button:nth-child(4)");
             await (0, timer_1.timer)(500);
             await this.moveAndClick(page, ".artdeco-modal__actionbar > button:nth-child(1)");
             await (0, timer_1.timer)(500);
@@ -83,7 +86,8 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
                 var _a;
                 const find = document.querySelector(".artdeco-modal__actionbar > button:nth-child(2)");
                 return (find &&
-                    ((_a = find === null || find === void 0 ? void 0 : find.getAttribute("class")) === null || _a === void 0 ? void 0 : _a.indexOf("artdeco-button--disabled")) === -1);
+                    ((_a = find === null || find === void 0 ? void 0 : find.getAttribute("class")) === null || _a === void 0 ? void 0 : _a.indexOf("artdeco-button--disabled")) ===
+                        -1);
             });
         }
         await this.moveAndClick(page, ".artdeco-modal__actionbar > button:nth-child(2)");
@@ -113,7 +117,7 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
     async connectMethod3(page) {
         await this.moveAndClick(page, ".pv-top-card button.artdeco-dropdown__trigger:not(:disabled)", 200);
         await (0, timer_1.timer)(800);
-        await this.moveMouseAndScroll(page, '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]', 2000);
+        await this.moveMouseAndScroll(page, '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]', 1000);
         await page.evaluate(() => {
             var _a;
             return ((_a = document
@@ -147,18 +151,18 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
     }
     async clickConnectButton(page) {
         try {
-            await this.connectMethod1(page);
+            await this.connectMethod3(page);
         }
         catch (err) {
             try {
-                await this.connectMethod3(page);
+                await this.connectMethod4(page);
             }
             catch (err) {
                 try {
                     await this.connectMethod2(page);
                 }
                 catch (err) {
-                    await this.connectMethod4(page);
+                    await this.connectMethod1(page);
                 }
             }
         }

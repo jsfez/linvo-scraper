@@ -1,12 +1,10 @@
-import {
-  LinkedinServicesInterface,
-} from "./linkedin.services.interface";
+import { LinkedinServicesInterface } from "./linkedin.services.interface";
 import { CDPSession, Page } from "puppeteer";
 import { LinkedinAbstractService } from "./linkedin.abstract.service";
-import {createLinkedinLink} from "../helpers/create.linkedin.url";
-import {gotoUrl} from "../helpers/gotoUrl";
-import {timer} from "../helpers/timer";
-import {LinkedinErrors} from "../enums/linkedin.errors";
+import { createLinkedinLink } from "../helpers/create.linkedin.url";
+import { gotoUrl } from "../helpers/gotoUrl";
+import { timer } from "../helpers/timer";
+import { LinkedinErrors } from "../enums/linkedin.errors";
 
 interface RequiredData {
   message: string;
@@ -29,9 +27,12 @@ export class LinkedinConnectService
     gotoUrl(page, theUrl);
 
     await this.waitForLoader(page);
+    if (page.url().match("404")) {
+      throw new LinkedinErrors("Page not found");
+    }
 
     await page.waitForSelector(".pv-top-card--list > li, .pv-top-card__photo");
-    await timer(3000);
+    await timer(500);
 
     const pending = await page.$(
       "button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary"
@@ -40,13 +41,13 @@ export class LinkedinConnectService
     const pending2 = await page.evaluate(() => {
       return !!Array.from(document.querySelectorAll("button")).find(
         (p) =>
-          p?.textContent?.toLowerCase()?.trim()?.indexOf("pending")! > -1 ||
-          p?.textContent?.toLowerCase()?.trim()?.indexOf("en attente")! > -1 ||
-          p?.textContent?.toLowerCase()?.trim()?.indexOf("待處理")! > -1 ||
-          p?.textContent?.toLowerCase()?.trim()?.indexOf("ausstehend")! > -1 ||
-          p?.textContent?.toLowerCase()?.trim()?.indexOf("nawiąż kontakt")! >
+          p?.textContent?.toLowerCase()?.trim()?.indexOf("pending") > -1 ||
+          p?.textContent?.toLowerCase()?.trim()?.indexOf("en attente") > -1 ||
+          p?.textContent?.toLowerCase()?.trim()?.indexOf("待處理") > -1 ||
+          p?.textContent?.toLowerCase()?.trim()?.indexOf("ausstehend") > -1 ||
+          p?.textContent?.toLowerCase()?.trim()?.indexOf("nawiąż kontakt") >
             -1 ||
-          p?.textContent?.toLowerCase()?.trim()?.indexOf("in sospeso")! > -1
+          p?.textContent?.toLowerCase()?.trim()?.indexOf("in sospeso") > -1
       );
     });
 
@@ -58,27 +59,29 @@ export class LinkedinConnectService
 
     await this.clickConnectButton(page);
 
-    await timer(3000);
+    await timer(500);
 
-    const email = await page.$("#email");
+    const email = await page.$('input[name="email"]');
     if (email) {
       throw new LinkedinErrors("Linkedin Prompt Email Verification");
     }
 
     try {
-      await page.waitForSelector('.artdeco-pill-choice-group button', {
+      await page.waitForSelector(".artdeco-pill-choice-group button", {
         visible: true,
-        timeout: 3000
+        timeout: 500,
       });
-      await this.moveAndClick(page, '.artdeco-pill-choice-group button:nth-child(1)');
-      await timer(500);
       await this.moveAndClick(
-          page,
-          ".artdeco-modal__actionbar > button:nth-child(1)"
+        page,
+        ".artdeco-pill-choice-group button:nth-child(4)"
       );
       await timer(500);
-    }
-    catch (err) {}
+      await this.moveAndClick(
+        page,
+        ".artdeco-modal__actionbar > button:nth-child(1)"
+      );
+      await timer(500);
+    } catch (err) {}
 
     if (message) {
       await page.waitForSelector(".artdeco-modal", {
@@ -143,7 +146,8 @@ export class LinkedinConnectService
         );
         return (
           find &&
-          find?.getAttribute("class")?.indexOf("artdeco-button--disabled") === -1
+          find?.getAttribute("class")?.indexOf("artdeco-button--disabled") ===
+            -1
         );
       });
     }
@@ -197,7 +201,7 @@ export class LinkedinConnectService
     await this.moveMouseAndScroll(
       page,
       '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]',
-      2000
+      1000
     );
 
     await page.evaluate(() => {
@@ -259,15 +263,15 @@ export class LinkedinConnectService
 
   async clickConnectButton(page: Page) {
     try {
-      await this.connectMethod1(page);
+      await this.connectMethod3(page);
     } catch (err) {
       try {
-        await this.connectMethod3(page);
+        await this.connectMethod4(page);
       } catch (err) {
         try {
           await this.connectMethod2(page);
         } catch (err) {
-          await this.connectMethod4(page);
+          await this.connectMethod1(page);
         }
       }
     }
