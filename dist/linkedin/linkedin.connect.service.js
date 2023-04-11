@@ -35,7 +35,7 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         }
         const info = await this.extractInformation(page);
         await this.clickConnectButton(page);
-        await (0, timer_1.timer)(500);
+        await (0, timer_1.timer)(1000);
         const email = await page.$('input[name="email"]');
         if (email) {
             throw new linkedin_errors_1.LinkedinErrors("Linkedin Prompt Email Verification");
@@ -115,22 +115,32 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         };
     }
     async connectMethod3(page) {
+        console.log("  -> connectMethod3");
         await this.moveAndClick(page, ".pv-top-card button.artdeco-dropdown__trigger:not(:disabled)", 200);
         await (0, timer_1.timer)(800);
-        await this.moveMouseAndScroll(page, '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]', 1000);
+        const pending = await page.$('.pv-top-card ul li [aria-label^="Pending"]');
+        if (pending) {
+            throw new linkedin_errors_1.LinkedinErrors("  -> Connection is already pending");
+        }
+        const connectButtonSelector = '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"], .pv-top-card ul li [type="connect"]';
+        const connectButton = await page.$(connectButtonSelector);
+        console.log(connectButton ? "  -> connectButton found" : "  -> no connectButton");
+        await this.moveMouseAndScroll(page, connectButtonSelector, 1000);
         await page.evaluate(() => {
             var _a;
-            return ((_a = document
-                .querySelector('.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]')) === null || _a === void 0 ? void 0 : _a.click());
+            return (_a = document.querySelector(connectButtonSelector)) === null || _a === void 0 ? void 0 : _a.click();
         });
     }
     async connectMethod2(page) {
+        console.log("  -> connectMethod2");
         await this.moveAndClick(page, '.pv-top-card button.pv-s-profile-actions--connect:not(:disabled), [aria-label="Connect"], [data-control-name="connect"], .pvs-profile-actions__action:not(.artdeco-button--secondary):not([data-control-name="follow"]):not(.message-anywhere-button)');
     }
     async connectMethod4(page) {
+        console.log("  -> connectMethod4");
         await this.moveAndClick(page, ".pv-top-card li-icon[type=connect] + span");
     }
     async connectMethod1(page) {
+        console.log("  -> connectMethod1");
         const button = await page.evaluate(() => {
             var _a, _b;
             return (_b = (_a = Array.from(document.querySelectorAll(".pvs-profile-actions button"))) === null || _a === void 0 ? void 0 : _a.find((f) => {

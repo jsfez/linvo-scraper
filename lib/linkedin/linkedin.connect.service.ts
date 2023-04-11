@@ -35,7 +35,7 @@ export class LinkedinConnectService
     await timer(500);
 
     const pending = await page.$(
-      "button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary"
+      "button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary, .pv-top-card ul li [aria-label^='Pending']"
     );
 
     const pending2 = await page.evaluate(() => {
@@ -59,7 +59,7 @@ export class LinkedinConnectService
 
     await this.clickConnectButton(page);
 
-    await timer(500);
+    await timer(1000);
 
     const email = await page.$('input[name="email"]');
     if (email) {
@@ -198,22 +198,31 @@ export class LinkedinConnectService
 
     await timer(800);
 
-    await this.moveMouseAndScroll(
-      page,
-      '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]',
-      1000
+    const connectButtonSelector = [
+      '[aria-label="Connect"]',
+      "div.pv-s-profile-actions--connect",
+      '[data-control-name="connect"]',
+      '[type="connect-icon"]',
+      '[type="connect"]',
+    ]
+      .map((s) => ".pv-top-card .artdeco-dropdown__content-inner " + s)
+      .join(", ");
+
+    const connectButton = await page.$(connectButtonSelector);
+    console.log(
+      connectButton ? "   -> connectButton found" : "   -> no connectButton"
     );
 
+    await this.moveMouseAndScroll(
+      page,
+      connectButtonSelector,
+      30000,
+      false,
+      -200
+    );
     await page.evaluate(() => {
       // @ts-ignore
-      return (
-        document
-          .querySelector(
-            '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"]'
-          )
-          // @ts-ignore
-          ?.click()
-      );
+      return document.querySelector(connectButtonSelector)?.click();
     });
   }
 
@@ -263,14 +272,18 @@ export class LinkedinConnectService
 
   async clickConnectButton(page: Page) {
     try {
+      console.log("   -> connectMethod3");
       await this.connectMethod3(page);
     } catch (err) {
       try {
+        console.log("   -> connectMethod4");
         await this.connectMethod4(page);
       } catch (err) {
         try {
+          console.log("   -> connectMethod2");
           await this.connectMethod2(page);
         } catch (err) {
+          console.log("   -> connectMethod1");
           await this.connectMethod1(page);
         }
       }
