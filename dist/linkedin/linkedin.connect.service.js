@@ -6,6 +6,7 @@ const create_linkedin_url_1 = require("../helpers/create.linkedin.url");
 const gotoUrl_1 = require("../helpers/gotoUrl");
 const timer_1 = require("../helpers/timer");
 const linkedin_errors_1 = require("../enums/linkedin.errors");
+const moreDropdownSelector = ".pv-top-card .artdeco-dropdown__content-inner";
 class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstractService {
     async process(page, cdp, data) {
         const { message, url } = data;
@@ -17,7 +18,7 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         }
         await page.waitForSelector(".pv-top-card--list > li, .pv-top-card__photo");
         await (0, timer_1.timer)(500);
-        const pending = await page.$("button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary, .pv-top-card ul li [aria-label^='Pending']");
+        const pending = await page.$(`button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary, ${moreDropdownSelector} [aria-label^='Pending']`);
         const pending2 = await page.evaluate(() => {
             return !!Array.from(document.querySelectorAll("button")).find((p) => {
                 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
@@ -32,6 +33,10 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         });
         if (pending || pending2) {
             throw new linkedin_errors_1.LinkedinErrors("Connection is already pending");
+        }
+        const connected = await page.$(`${moreDropdownSelector} [type='remove-connection']`);
+        if (connected) {
+            throw new linkedin_errors_1.LinkedinErrors("Already connected");
         }
         const info = await this.extractInformation(page);
         await this.clickConnectButton(page);
@@ -123,9 +128,9 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
             "div.pv-s-profile-actions--connect",
             '[data-control-name="connect"]',
             '[type="connect-icon"]',
-            'ul li [type="connect"]',
+            "[type=connect] + span",
         ]
-            .map((s) => ".pv-top-card .artdeco-dropdown__content-inner " + s)
+            .map((s) => `{moreDropdownSelector} ${s}`)
             .join(", ");
         const connectButton = await page.$(connectButtonSelector);
         if (!connectButton) {

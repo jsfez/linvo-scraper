@@ -16,6 +16,8 @@ interface RequiredData {
   };
 }
 
+const moreDropdownSelector = ".pv-top-card .artdeco-dropdown__content-inner";
+
 export class LinkedinConnectService
   extends LinkedinAbstractService
   implements LinkedinServicesInterface<RequiredData>
@@ -35,7 +37,7 @@ export class LinkedinConnectService
     await timer(500);
 
     const pending = await page.$(
-      "button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary, .pv-top-card ul li [aria-label^='Pending']"
+      `button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary, ${moreDropdownSelector} [aria-label^='Pending']`
     );
 
     const pending2 = await page.evaluate(() => {
@@ -53,6 +55,14 @@ export class LinkedinConnectService
 
     if (pending || pending2) {
       throw new LinkedinErrors("Connection is already pending");
+    }
+
+    const connected = await page.$(
+      `${moreDropdownSelector} [type='remove-connection']`
+    );
+
+    if (connected) {
+      throw new LinkedinErrors("Already connected");
     }
 
     const info = await this.extractInformation(page);
@@ -201,9 +211,9 @@ export class LinkedinConnectService
       "div.pv-s-profile-actions--connect",
       '[data-control-name="connect"]',
       '[type="connect-icon"]',
-      'ul li [type="connect"]',
+      "[type=connect] + span",
     ]
-      .map((s) => ".pv-top-card .artdeco-dropdown__content-inner " + s)
+      .map((s) => `{moreDropdownSelector} ${s}`)
       .join(", ");
     const connectButton = await page.$(connectButtonSelector);
 
@@ -213,11 +223,6 @@ export class LinkedinConnectService
     }
 
     page.click(connectButtonSelector);
-
-    // await page.evaluate(() => {
-    //   // @ts-ignore
-    //   return document.querySelector(connectButtonSelector)?.click();
-    // });
   }
 
   async connectMethod2(page: Page) {
