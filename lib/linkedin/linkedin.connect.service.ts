@@ -204,16 +204,20 @@ export class LinkedinConnectService
       'ul li [type="connect"]',
     ]
       .map((s) => ".pv-top-card .artdeco-dropdown__content-inner " + s)
-      .join(", "); //?
+      .join(", ");
     const connectButton = await page.$(connectButtonSelector);
-    console.log(
-      connectButton ? "   -> connectButton found" : "   -> no connectButton"
-    );
 
-    await page.evaluate(() => {
-      // @ts-ignore
-      return document.querySelector(connectButtonSelector)?.click();
-    });
+    if (!connectButton) {
+      console.log("   -> connect button not found in dropdown");
+      throw new Error("connect button not found in dropdown");
+    }
+
+    page.click(connectButtonSelector);
+
+    // await page.evaluate(() => {
+    //   // @ts-ignore
+    //   return document.querySelector(connectButtonSelector)?.click();
+    // });
   }
 
   async connectMethod2(page: Page) {
