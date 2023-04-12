@@ -17,7 +17,7 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         }
         await page.waitForSelector(".pv-top-card--list > li, .pv-top-card__photo");
         await (0, timer_1.timer)(500);
-        const pending = await page.$("button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary");
+        const pending = await page.$("button.pv-s-profile-actions--connect:disabled, .message-anywhere-button.artdeco-button--primary, .pv-top-card ul li [aria-label^='Pending']");
         const pending2 = await page.evaluate(() => {
             return !!Array.from(document.querySelectorAll("button")).find((p) => {
                 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
@@ -115,32 +115,32 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
         };
     }
     async connectMethod3(page) {
-        console.log("  -> connectMethod3");
-        await this.moveAndClick(page, ".pv-top-card button.artdeco-dropdown__trigger:not(:disabled)", 200);
+        const moreButtonSelector = ".pv-top-card button.artdeco-dropdown__trigger:not(:disabled)";
+        await this.moveAndClick(page, moreButtonSelector, 200);
         await (0, timer_1.timer)(800);
-        const pending = await page.$('.pv-top-card ul li [aria-label^="Pending"]');
-        if (pending) {
-            throw new linkedin_errors_1.LinkedinErrors("  -> Connection is already pending");
-        }
-        const connectButtonSelector = '.pv-top-card [aria-label="Connect"], .pv-top-card div.pv-s-profile-actions--connect, .pv-top-card [data-control-name="connect"], .pv-top-card [type="connect-icon"], .pv-top-card ul li [type="connect"]';
+        const connectButtonSelector = [
+            '[aria-label="Connect"]',
+            "div.pv-s-profile-actions--connect",
+            '[data-control-name="connect"]',
+            '[type="connect-icon"]',
+            'ul li [type="connect"]',
+        ]
+            .map((s) => ".pv-top-card .artdeco-dropdown__content-inner " + s)
+            .join(", ");
         const connectButton = await page.$(connectButtonSelector);
-        console.log(connectButton ? "  -> connectButton found" : "  -> no connectButton");
-        await this.moveMouseAndScroll(page, connectButtonSelector, 1000);
-        await page.evaluate(() => {
-            var _a;
-            return (_a = document.querySelector(connectButtonSelector)) === null || _a === void 0 ? void 0 : _a.click();
-        });
+        if (!connectButton) {
+            console.log("   -> connect button not found in dropdown");
+            throw new Error("connect button not found in dropdown");
+        }
+        page.click(connectButtonSelector);
     }
     async connectMethod2(page) {
-        console.log("  -> connectMethod2");
         await this.moveAndClick(page, '.pv-top-card button.pv-s-profile-actions--connect:not(:disabled), [aria-label="Connect"], [data-control-name="connect"], .pvs-profile-actions__action:not(.artdeco-button--secondary):not([data-control-name="follow"]):not(.message-anywhere-button)');
     }
     async connectMethod4(page) {
-        console.log("  -> connectMethod4");
         await this.moveAndClick(page, ".pv-top-card li-icon[type=connect] + span");
     }
     async connectMethod1(page) {
-        console.log("  -> connectMethod1");
         const button = await page.evaluate(() => {
             var _a, _b;
             return (_b = (_a = Array.from(document.querySelectorAll(".pvs-profile-actions button"))) === null || _a === void 0 ? void 0 : _a.find((f) => {
@@ -161,17 +161,21 @@ class LinkedinConnectService extends linkedin_abstract_service_1.LinkedinAbstrac
     }
     async clickConnectButton(page) {
         try {
+            console.log("   -> connectMethod3");
             await this.connectMethod3(page);
         }
         catch (err) {
             try {
+                console.log("   -> connectMethod4");
                 await this.connectMethod4(page);
             }
             catch (err) {
                 try {
+                    console.log("   -> connectMethod2");
                     await this.connectMethod2(page);
                 }
                 catch (err) {
+                    console.log("   -> connectMethod1");
                     await this.connectMethod1(page);
                 }
             }
