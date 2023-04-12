@@ -190,12 +190,10 @@ export class LinkedinConnectService
   }
 
   async connectMethod3(page: Page) {
-    await this.moveAndClick(
-      page,
-      ".pv-top-card button.artdeco-dropdown__trigger:not(:disabled)",
-      200
-    );
+    const moreButtonSelector =
+      ".pv-top-card button.artdeco-dropdown__trigger:not(:disabled)";
 
+    await this.moveAndClick(page, moreButtonSelector, 200);
     await timer(800);
 
     const connectButtonSelector = [
@@ -203,23 +201,15 @@ export class LinkedinConnectService
       "div.pv-s-profile-actions--connect",
       '[data-control-name="connect"]',
       '[type="connect-icon"]',
-      '[type="connect"]',
+      'ul li [type="connect"]',
     ]
       .map((s) => ".pv-top-card .artdeco-dropdown__content-inner " + s)
-      .join(", ");
-
+      .join(", "); //?
     const connectButton = await page.$(connectButtonSelector);
     console.log(
       connectButton ? "   -> connectButton found" : "   -> no connectButton"
     );
 
-    await this.moveMouseAndScroll(
-      page,
-      connectButtonSelector,
-      30000,
-      false,
-      -200
-    );
     await page.evaluate(() => {
       // @ts-ignore
       return document.querySelector(connectButtonSelector)?.click();
